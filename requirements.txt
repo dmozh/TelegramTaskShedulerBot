@@ -1,0 +1,7 @@
+﻿cryptography
+aiohttp
+aiohttp_session
+gunicorn
+requests
+#pyodbc
+#psycopg2

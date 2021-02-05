@@ -1,0 +1,23 @@
+﻿from aiohttp import web
+import argparse
+from app import create_app
+from network import send_request, TypeRequest
+import credentials as crs
+
+dev = True
+if dev:
+    from dev import server
+
+parser = argparse.ArgumentParser(description="aiohttp server example")
+parser.add_argument('--path')
+parser.add_argument('--port')
+app = create_app()
+if __name__ == '__main__':
+    r = send_request(host=f"{crs.BASE_URL}{crs.API_TOKEN}",
+                     api_url=f"/setWebhook",
+                     request_type=TypeRequest.GET,
+                     query_params={"url": f"{server.dev_server.url}/action"}
+                     )
+    args = parser.parse_args()
+    print(args.path, args.port)
+    web.run_app(app, path=args.path, port=args.port)
