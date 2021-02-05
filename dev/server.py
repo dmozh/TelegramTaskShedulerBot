@@ -4,19 +4,35 @@ import json
 import threading
 import sys
 
+platform = sys.platform
+if platform == 'win32':
+    wait = 5
+else:
+    wait = 20
+
 class NgrokTunnelServer:
-    START_NGROK_COMMAND = f"{sys.path[0]}/dev/ngrok http 8080"
+    if platform == 'win32':
+        START_NGROK_COMMAND = f"{sys.path[0]}/dev/ngrok http 8080"
+    elif platform == "linux" or platform == "linux2":
+        START_NGROK_COMMAND = f"ngrok http 8080"
+    else:
+        sys.exit(0)
 
     def __init__(self):
         self.url = ''
 
     def set_tunnel(self):
-        subprocess.run(self.START_NGROK_COMMAND)
+        if platform == 'win32':
+            subprocess.run(self.START_NGROK_COMMAND)
+        elif platform == "linux" or platform == "linux2":
+            subprocess.Popen(['gnome-terminal', f'--command={self.START_NGROK_COMMAND}'])
+        else:
+            sys.exit(0)
 
     def set_url(self):
         print('waiting')
         event = threading.Event()
-        event.wait(5)
+        event.wait(wait)
         print('get tunneling url')
         try:
             api_url = 'http://127.0.0.1:4040/api/tunnels'

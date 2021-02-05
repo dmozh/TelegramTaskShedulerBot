@@ -4,6 +4,7 @@ from app import create_app
 from network import send_request, TypeRequest
 import credentials as crs
 
+# for standalone launch
 dev = True
 if dev:
     from dev import server
