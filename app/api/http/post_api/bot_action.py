@@ -2,6 +2,7 @@ from aiohttp import web
 import json
 from network import send_request, TypeRequest
 import settings as crs
+from app import redis_connector
 
 pool = {}
 
@@ -15,22 +16,6 @@ async def action(request):
         await __callback_query(msg_object)
     else:
         await __message(msg_object)
-    # print(msg_action)
-    # chat_id = msg_action['chat']['id']
-    # print(chat_id)
-    # params = {'chat_id': chat_id, 'text': f'Hello guest',
-    #           'reply_markup': {
-    #               'inline_keyboard': [
-    #                   [{'text': 'test', "callback_data": 'test'}]
-    #               ]
-    #           }}
-
-    # r = send_request(host=f"{crs.BASE_URL}{crs.API_TOKEN}",
-    #                  api_url="/sendMessage",
-    #                  request_type=TypeRequest.POST,
-    #                  body=params)
-    # print(r)
-    # requests.post(url, headers=None, json=params)
     return web.Response(text='dd')
 
 
@@ -59,14 +44,32 @@ async def __message(msg_object):
                           [{'text': 'Ok', "callback_data": 'OK'}]
                       ]}
                   }
-    elif inner_msg_text == '/deletetask':
-        params = {'chat_id': chat_id, 'text': ''}
+    elif '/deletetask' in inner_msg_text:
+        try:
+            tid = inner_msg_text.split(' ')[1]
+            redis_connector.delete_task(tid)
+            text = f'Deleted {tid}'
+        except Exception:
+            text = "123"
+        params = {'chat_id': chat_id, 'text': text}
     elif inner_msg_text == '/changetask':
-        params = {'chat_id': chat_id, 'text': ''}
+        params = {'chat_id': chat_id, 'text': '123'}
     elif inner_msg_text == '/taskslist':
-        params = {'chat_id': chat_id, 'text': ''}
+        tasks = redis_connector.get_task_list(chat_id)
+        text = "Your tasks:\n"
+        for task in tasks:
+            text += f"job_id: {task['job_id']}, cron expression: {task['cronexpr']}, notify: {task['notify']}\n"
+        params = {'chat_id': chat_id, 'text': text}
+    elif inner_msg_text == '/commands':
+        text = "Commands list:\n" \
+               "/newtask - add new notify task\n" \
+               "/taskslist - show all your tasks\n" \
+               "/deletetask - delete entered your task\n" \
+               "/changetask - change entered your task\n" \
+               "/pausetask - chanfe entered your task\n"
+        params = {'chat_id': chat_id, 'text': text}
     else:
-        text = ''
+        text = '/commands'
         params = {'chat_id': chat_id, 'text': text}
         if chat_id in pool:
             if not pool[chat_id]['have_notify']:
@@ -109,6 +112,9 @@ async def __callback_query(msg_object):
     elif 'allright' in _msg_action['data']:
         if _msg_action['data'].split('|')[1].lower() == 'yes':
             params['text'] = 'Success! You add new notify task\n'
+            redis_connector.publish_task(chat_id=chat_id,
+                                         notify=pool[chat_id]['notify'],
+                                         cronexpr=pool[chat_id]['cron'])
             del pool[chat_id]
         else:
             params['text'] = 'Ok, would you like start over?\n'
@@ -126,7 +132,7 @@ async def __callback_query(msg_object):
             params['text'] = 'Ok, i hope we see you soon ;)\n'
             del pool[chat_id]
     else:
-        params = {'chat_id': chat_id, 'text': ''}
+        params = {'chat_id': chat_id, 'text': '/commands'}
 
     await __send_msg(params)
 
