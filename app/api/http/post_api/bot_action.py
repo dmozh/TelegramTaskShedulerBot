@@ -52,6 +52,14 @@ async def __message(msg_object):
         except Exception:
             text = "123"
         params = {'chat_id': chat_id, 'text': text}
+    elif '/pausetask' in inner_msg_text:
+        try:
+            tid = inner_msg_text.split(' ')[1]
+            redis_connector.pause_task(tid)
+            text = f'Paused {tid}'
+        except Exception:
+            text = "123"
+        params = {'chat_id': chat_id, 'text': text}
     elif inner_msg_text == '/changetask':
         params = {'chat_id': chat_id, 'text': '123'}
     elif inner_msg_text == '/taskslist':

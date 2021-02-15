@@ -39,3 +39,9 @@ def delete_task(job_id):
 def change_task():
     channel = 'change-channel'
     pass
+
+
+def pause_task(job_id):
+    channel = 'change-channel'
+    data = json.dumps({'job_id': job_id, 'work': 0})
+    __redis_client.publish(channel, data)
