@@ -1,5 +1,4 @@
 ﻿from .api import http, websocket
-import credentials as crs
 
 
 def setup_routes(app):

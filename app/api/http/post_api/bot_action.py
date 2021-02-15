@@ -1,50 +1,138 @@
-from app.sql.sql_handler import sql_exec as handle
 from aiohttp import web
 import json
 from network import send_request, TypeRequest
-import credentials as crs
-import requests
+import settings as crs
+
+pool = {}
 
 
 async def action(request):
     msg_object = await request.json()
     print(json.dumps(msg_object))
-    # print(**msg_object)
-    if 'message' in msg_object:
-        msg_action = msg_object['message']
-    elif 'edited_message' in msg_object:
-        msg_action = msg_object['edited_message']
+    if 'edited_message' in msg_object:
+        await __edited_message(msg_object)
     elif 'callback_query' in msg_object:
-        msg_action = msg_object['callback_query']
-        print('fff')
+        await __callback_query(msg_object)
     else:
-        msg_action = msg_object['message']
-    print(msg_action)
-    chat_id = msg_action['chat']['id']
-    print(chat_id)
-    params = {'chat_id': chat_id, 'text': f'Hello guest',
-              'reply_markup': {
-                  'inline_keyboard': [
-                      [{'text': 'test', "callback_data": 'test'}]
-                  ]
-              }}
+        await __message(msg_object)
+    # print(msg_action)
+    # chat_id = msg_action['chat']['id']
+    # print(chat_id)
+    # params = {'chat_id': chat_id, 'text': f'Hello guest',
+    #           'reply_markup': {
+    #               'inline_keyboard': [
+    #                   [{'text': 'test', "callback_data": 'test'}]
+    #               ]
+    #           }}
 
-    r = send_request(host=f"{crs.BASE_URL}{crs.API_TOKEN}",
-                     api_url="/sendMessage",
-                     request_type=TypeRequest.POST,
-                     body=params)
+    # r = send_request(host=f"{crs.BASE_URL}{crs.API_TOKEN}",
+    #                  api_url="/sendMessage",
+    #                  request_type=TypeRequest.POST,
+    #                  body=params)
     # print(r)
     # requests.post(url, headers=None, json=params)
     return web.Response(text='dd')
 
 
-async def __message():
+async def __message(msg_object):
+    _msg_action = msg_object['message']
+    print(_msg_action)
+    chat_id = _msg_action['chat']['id']
+    inner_msg_text = _msg_action['text']
+    if inner_msg_text == '/start':
+        params = {'chat_id': chat_id, 'text': 'Hello guest'}
+    elif inner_msg_text == '/newtask':
+        pool[chat_id] = {"chat_id": chat_id, "action": "newtask"}
+        params = {'chat_id': chat_id, 'text': f'If you would like add new notify, '
+                                              f'you need point out cron expression for schedule and notify msg\n'
+                                              f'Rules for cron expression:\n'
+                                              f"*    *    *      *     *      *\n"
+                                              f"sec  min  hours  days  month  years\n"
+                                              f"* - every time, every second, every day, etc\n"
+                                              f"0 - specific time\n"
+                                              f"0/15 - every any time from start example every 15 minute from start 0\n"
+                                              f"MON,TUE,WED,THU,FRI,SAT,SUN - specific week days\n"
+                                              f"For example: 0 0 14 MON,TUE,WED * * - for every month in "
+                                              f"monday, tuesday and wednesday in 14:00am you get notify",
+                  'reply_markup': {
+                      'inline_keyboard': [
+                          [{'text': 'Ok', "callback_data": 'OK'}]
+                      ]}
+                  }
+    elif inner_msg_text == '/deletetask':
+        params = {'chat_id': chat_id, 'text': ''}
+    elif inner_msg_text == '/changetask':
+        params = {'chat_id': chat_id, 'text': ''}
+    elif inner_msg_text == '/taskslist':
+        params = {'chat_id': chat_id, 'text': ''}
+    else:
+        text = ''
+        params = {'chat_id': chat_id, 'text': text}
+        if chat_id in pool:
+            if not pool[chat_id]['have_notify']:
+                pool[chat_id]['notify'] = inner_msg_text
+                pool[chat_id]['have_notify'] = True
+                text = 'Enter schedule use cron expression'
+            elif not pool[chat_id]['have_cron']:
+                pool[chat_id]['cron'] = inner_msg_text
+                pool[chat_id]['have_cron'] = True
+            if pool[chat_id]['have_cron'] and pool[chat_id]['have_notify']:
+                text = f"Your notify msg: {pool[chat_id]['notify']}\n" \
+                       f"Your schedule: {pool[chat_id]['cron']}\n" \
+                       f"All right?"
+                params['reply_markup'] = {
+                      'inline_keyboard': [
+                          [{'text': 'Yes =)', "callback_data": 'allright|yes'},
+                           {'text': 'No ;(', "callback_data": 'allright|no'}]
+                      ]}
+            params['text'] = text
+
+    await __send_msg(params)
+
+
+async def __edited_message(msg_object):
+    msg_action = msg_object['edited_message']
+    print(msg_action)
     pass
 
 
-async def __edited_message():
-    pass
+async def __callback_query(msg_object):
+    _msg_action = msg_object['callback_query']
+    print(_msg_action)
+    chat_id = _msg_action['message']['chat']['id']
+    params = {'chat_id': chat_id}
+    if _msg_action['data'] == "OK":
+        params['text'] =  'Great! Then we starting\n' \
+                          'Please enter what you would like notify to myself'
+        pool[chat_id]['have_notify'] = False
+        pool[chat_id]['have_cron'] = False
+    elif 'allright' in _msg_action['data']:
+        if _msg_action['data'].split('|')[1].lower() == 'yes':
+            params['text'] = 'Success! You add new notify task\n'
+            del pool[chat_id]
+        else:
+            params['text'] = 'Ok, would you like start over?\n'
+            params['reply_markup'] = {
+                'inline_keyboard': [
+                    [{'text': 'Yes', "callback_data": 'startover|yes'},
+                     {'text': 'No', "callback_data": 'startover|no'}]
+                ]}
+    elif 'startover' in _msg_action['data']:
+        if _msg_action['data'].split('|')[1].lower() == 'yes':
+            params['text'] = 'Nice^^\nPlease enter what you would like notify to myself'
+            pool[chat_id]['have_notify'] = False
+            pool[chat_id]['have_cron'] = False
+        else:
+            params['text'] = 'Ok, i hope we see you soon ;)\n'
+            del pool[chat_id]
+    else:
+        params = {'chat_id': chat_id, 'text': ''}
+
+    await __send_msg(params)
 
 
-async def __callback_query():
-    pass
+async def __send_msg(params):
+    send_request(host=f"{crs.BASE_URL}{crs.API_TOKEN}",
+                 api_url="/sendMessage",
+                 request_type=TypeRequest.POST,
+                 body=params)

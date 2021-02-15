@@ -1,7 +1,4 @@
-﻿from app.sql.sql_handler import sql_exec as handle
-from aiohttp import web
-import json
-from network import send_request, TypeRequest
+﻿from aiohttp import web
 
 
 async def test_json(request):

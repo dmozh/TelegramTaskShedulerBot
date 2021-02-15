@@ -2,7 +2,7 @@
 import argparse
 from app import create_app
 from network import send_request, TypeRequest
-import credentials as crs
+import settings as crs
 
 # for standalone launch
 dev = True

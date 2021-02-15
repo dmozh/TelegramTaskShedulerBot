@@ -1,6 +1,6 @@
 ﻿import requests
 import logger
-import credentials
+import settings
 from enum import Enum
 
 

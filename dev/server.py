@@ -10,6 +10,7 @@ if platform == 'win32':
 else:
     wait = 20
 
+
 class NgrokTunnelServer:
     if platform == 'win32':
         START_NGROK_COMMAND = f"{sys.path[0]}/dev/ngrok http 8080"

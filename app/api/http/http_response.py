@@ -1,6 +1,4 @@
-﻿from app.sql.sql_handler import sql_exec as handle
-from aiohttp import web
-import json
+﻿from aiohttp import web
 
 
 async def test(request):

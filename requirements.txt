@@ -3,5 +3,6 @@ aiohttp
 aiohttp_session
 gunicorn
 requests
+redis
 #pyodbc
 #psycopg2
