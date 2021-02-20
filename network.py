@@ -34,9 +34,9 @@ def send_request(host: str, api_url: str, request_type: TypeRequest, headers: di
     try:
         logger.info_logger.info(
             logger.generate_message(f"{request_type.name} request",
-                                    f"Запрос к {url}\n"
-                                    f"Параметры запроса: {query_params}\n"
-                                    f"Тело запроса: {body}"))
+                                    f"Request to {url}\n"
+                                    f"Request params: {query_params}\n"
+                                    f"Request body: {body}"))
         if request_type == request_type.GET:
             response = requests.get(url, headers=headers, params=query_params)
         elif request_type == request_type.POST:
@@ -45,23 +45,23 @@ def send_request(host: str, api_url: str, request_type: TypeRequest, headers: di
         if response.status_code == 200:
             logger.info_logger.info(
                 logger.generate_message(f"{request_type.name} request",
-                                        f"Запрос к {url} успешно завершен. Код статус: {response.status_code}",
+                                        f"Request to {url} is successful end. Status code: {response.status_code}",
                                         headers=response.headers))
         else:
             logger.info_logger.warning(
-                logger.generate_message(f"{request_type.name} request", f"Запрос к {url} завершен, но ответ "
-                                        f"не был получен из-за ошибки. Код статуса ошибки: {response.status_code}",
+                logger.generate_message(f"{request_type.name} request", f"Request to {url} the end, but answer "
+                                        f"not get because of error. Status code: {response.status_code}",
                                         headers=response.headers))
     except requests.exceptions.ConnectionError as err:
         logger.info_logger.error(
             logger.generate_message(f"{request_type.name} request",
                                     f"{err}\n"
-                                    f"Запрос к {url} не смог получить ответа. Код статус: {500}"))
+                                    f"Request to {url} not get answer. Status code: {500}"))
     except TimeoutError as e:
         logger.info_logger.error(
             logger.generate_message(f"{request_type.name} request",
                                     f"{e}\n"
-                                    f"Запрос к {url} не смог получить ответа. Код статус: {500}"))
+                                    f"Request to {url} cannot get answer. Status code: {500}"))
     except Exception as exception:
         logger.traceback_logger.critical(exception, exc_info=True)
     return response

@@ -3,3 +3,4 @@
 app/__pycache__/
 app/views/__pycache__/
 /logs/
+settings.py

@@ -4,19 +4,17 @@ from aiohttp import web
 from aiohttp_session import setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from .routes import setup_routes
-
+import settings as crs
 
 # for gunicorn launch
-# DEV = True
-# if DEV:
-#     from dev import server
-#     from network import send_request, TypeRequest
-#     import credentials as crs
-#     r = send_request(host=f"{crs.BASE_URL}{crs.API_TOKEN}",
-#                      api_url=f"/setWebhook",
-#                      request_type=TypeRequest.GET,
-#                      query_params={"url": f"{server.dev_server.url}/action"}
-#                      )
+if crs.PRODUCTION:
+    from network import send_request, TypeRequest
+    r = send_request(host=f"{crs.BASE_URL}{crs.API_TOKEN}",
+                     api_url=f"/setWebhook",
+                     request_type=TypeRequest.GET,
+                     query_params={"url": f"{crs.HOST}/action"}
+                     )
+
 
 # simple create app
 # async def create_app():

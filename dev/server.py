@@ -49,7 +49,7 @@ class NgrokTunnelServer:
         print('url is set')
 
 
-dev_server = NgrokTunnelServer()
-subproc = threading.Thread(target=dev_server.set_tunnel)
-subproc.start()
-dev_server.set_url()
+# dev_server = NgrokTunnelServer()
+# subproc = threading.Thread(target=dev_server.set_tunnel)
+# subproc.start()
+# dev_server.set_url()

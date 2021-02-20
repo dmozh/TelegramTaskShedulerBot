@@ -3,7 +3,7 @@ import settings
 import json
 from datetime import datetime
 
-__redis_client = redis.Redis(host=settings.REDIS_IP, port=settings.REDIS_PORT)
+__redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
 
 
 def get_task_list(pattern):
