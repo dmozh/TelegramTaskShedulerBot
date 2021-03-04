@@ -3,25 +3,29 @@ import json
 from network import send_request, TypeRequest
 import settings as crs
 from app import redis_connector
+import logger
 
 pool = {}
 
 
 async def action(request):
     msg_object = await request.json()
-    print(json.dumps(msg_object))
+    logger.info_logger.info(logger.generate_message(f"Action is start", f"{json.dumps(msg_object)}"))
+    response_msg = {'msg': 'Action is start', 'method': 'post-action'}
+    # print(json.dumps(msg_object))
     if 'edited_message' in msg_object:
         await __edited_message(msg_object)
     elif 'callback_query' in msg_object:
         await __callback_query(msg_object)
     else:
         await __message(msg_object)
-    return web.Response(text='dd')
+    # return web.Response(text='dd')
+    return web.json_response(response_msg)
 
 
 async def __message(msg_object):
     _msg_action = msg_object['message']
-    print(_msg_action)
+    # print(_msg_action)
     chat_id = _msg_action['chat']['id']
     inner_msg_text = _msg_action['text']
     if inner_msg_text == '/start':
@@ -92,10 +96,10 @@ async def __message(msg_object):
                        f"Your schedule: {pool[chat_id]['cron']}\n" \
                        f"All right?"
                 params['reply_markup'] = {
-                      'inline_keyboard': [
-                          [{'text': 'Yes =)', "callback_data": 'allright|yes'},
-                           {'text': 'No ;(', "callback_data": 'allright|no'}]
-                      ]}
+                    'inline_keyboard': [
+                        [{'text': 'Yes =)', "callback_data": 'allright|yes'},
+                         {'text': 'No ;(', "callback_data": 'allright|no'}]
+                    ]}
             params['text'] = text
 
     await __send_msg(params)
@@ -103,18 +107,18 @@ async def __message(msg_object):
 
 async def __edited_message(msg_object):
     msg_action = msg_object['edited_message']
-    print(msg_action)
+    # print(msg_action)
     pass
 
 
 async def __callback_query(msg_object):
     _msg_action = msg_object['callback_query']
-    print(_msg_action)
+    # print(_msg_action)
     chat_id = _msg_action['message']['chat']['id']
     params = {'chat_id': chat_id}
     if _msg_action['data'] == "OK":
-        params['text'] =  'Great! Then we starting\n' \
-                          'Please enter what you would like notify to myself'
+        params['text'] = 'Great! Then we starting\n' \
+                         'Please enter what you would like notify to myself'
         pool[chat_id]['have_notify'] = False
         pool[chat_id]['have_cron'] = False
     elif 'allright' in _msg_action['data']:
