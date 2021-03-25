@@ -12,7 +12,7 @@ async def action(request):
     msg_object = await request.json()
     logger.info_logger.info(logger.generate_message(f"Action is start", f"{json.dumps(msg_object)}"))
     response_msg = {'msg': 'Action is start', 'method': 'post-action'}
-    # print(json.dumps(msg_object))
+
     if 'edited_message' in msg_object:
         await __edited_message(msg_object)
     elif 'callback_query' in msg_object:
@@ -31,6 +31,7 @@ async def __message(msg_object):
     if inner_msg_text == '/start':
         params = {'chat_id': chat_id, 'text': 'Hello guest'}
     elif inner_msg_text == '/newtask':
+        logger.info_logger.info(logger.generate_message(f"New task command is start", f"{json.dumps(_msg_action)}"))
         pool[chat_id] = {"chat_id": chat_id, "action": "newtask"}
         params = {'chat_id': chat_id, 'text': f'If you would like add new notify, '
                                               f'you need point out cron expression for schedule and notify msg\n'
@@ -49,6 +50,7 @@ async def __message(msg_object):
                       ]}
                   }
     elif '/deletetask' in inner_msg_text:
+        logger.info_logger.info(logger.generate_message(f"Delete task command is start", f"{json.dumps(_msg_action)}"))
         try:
             tid = inner_msg_text.split(' ')[1]
             redis_connector.delete_task(tid)
@@ -57,6 +59,7 @@ async def __message(msg_object):
             text = "123"
         params = {'chat_id': chat_id, 'text': text}
     elif '/pausetask' in inner_msg_text:
+        logger.info_logger.info(logger.generate_message(f"Pause task command is start", f"{json.dumps(_msg_action)}"))
         try:
             tid = inner_msg_text.split(' ')[1]
             redis_connector.pause_task(tid)
@@ -65,14 +68,17 @@ async def __message(msg_object):
             text = "123"
         params = {'chat_id': chat_id, 'text': text}
     elif inner_msg_text == '/changetask':
+        logger.info_logger.info(logger.generate_message(f"Change task command is start", f"{json.dumps(_msg_action)}"))
         params = {'chat_id': chat_id, 'text': '123'}
     elif inner_msg_text == '/taskslist':
+        logger.info_logger.info(logger.generate_message(f"Task list command is start", f"{json.dumps(_msg_action)}"))
         tasks = redis_connector.get_task_list(chat_id)
         text = "Your tasks:\n"
         for task in tasks:
             text += f"job_id: {task['job_id']}, cron expression: {task['cronexpr']}, notify: {task['notify']}\n"
         params = {'chat_id': chat_id, 'text': text}
     elif inner_msg_text == '/commands':
+        logger.info_logger.info(logger.generate_message(f"Commands list command is start", f"{json.dumps(_msg_action)}"))
         text = "Commands list:\n" \
                "/newtask - add new notify task\n" \
                "/taskslist - show all your tasks\n" \
@@ -81,6 +87,7 @@ async def __message(msg_object):
                "/pausetask - chanfe entered your task\n"
         params = {'chat_id': chat_id, 'text': text}
     else:
+        logger.info_logger.info(logger.generate_message(f"Send commands list", f"{json.dumps(_msg_action)}"))
         text = '/commands'
         params = {'chat_id': chat_id, 'text': text}
         if chat_id in pool:
@@ -150,6 +157,7 @@ async def __callback_query(msg_object):
 
 
 async def __send_msg(params):
+    logger.info_logger.info(logger.generate_message(f"Send msg", f"{json.dumps(params)}"))
     send_request(host=f"{crs.BASE_URL}{crs.API_TOKEN}",
                  api_url="/sendMessage",
                  request_type=TypeRequest.POST,
